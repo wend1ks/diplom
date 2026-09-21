@@ -1,0 +1,17 @@
+/* The existing graphite palette stays the default theme. */
+.theme-toggle { position: fixed; right: 20px; bottom: 20px; z-index: 20; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; color: var(--text-primary); background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 50%; box-shadow: 0 8px 24px rgba(0,0,0,.2); font-size: 20px; line-height: 1; }
+.theme-toggle:hover { background: var(--bg-hover); border-color: var(--accent); transform: translateY(-2px); }
+html[data-theme="light"] { --bg-base:#f6f8fc; --bg-surface:#fff; --bg-card:#fff; --bg-hover:#edf2fa; --border:#d9e1ef; --border-light:#bdc9dc; --text-primary:#172033; --text-secondary:#52627a; --text-muted:#77859a; --accent:#3d6fd1; --accent-glow:rgba(61,111,209,.16); --accent-dim:rgba(61,111,209,.09); --green:#18864b; }
+html[data-theme="light"] body,html[data-theme="light"] #root { background:var(--bg-base); color:var(--text-primary); }
+html[data-theme="light"] .topbar { background:rgba(255,255,255,.92); border-color:var(--border); }
+html[data-theme="light"] .brand,html[data-theme="light"] .hero h1,html[data-theme="light"] .page > h1,html[data-theme="light"] .pricing h2,html[data-theme="light"] .card strong { color:var(--text-primary); }
+html[data-theme="light"] .topbar nav a,html[data-theme="light"] .button.ghost { color:var(--text-secondary); }
+html[data-theme="light"] .topbar nav a:hover,html[data-theme="light"] .button.ghost:hover { color:var(--text-primary); background:var(--bg-hover); }
+html[data-theme="light"] .card,html[data-theme="light"] .course-card,html[data-theme="light"] .module,html[data-theme="light"] .assignment,html[data-theme="light"] .auth,html[data-theme="light"] .profile,html[data-theme="light"] .admin .row,html[data-theme="light"] .admin .editor,html[data-theme="light"] .admin-stat,html[data-theme="light"] .admin-card { background:var(--bg-card); border-color:var(--border); }
+html[data-theme="light"] .card p,html[data-theme="light"] .course-card p,html[data-theme="light"] .hero p,html[data-theme="light"] .lead { color:var(--text-secondary); }
+html[data-theme="light"] .auth input,html[data-theme="light"] .profile input,html[data-theme="light"] .editor input,html[data-theme="light"] .editor textarea,html[data-theme="light"] .editor select,html[data-theme="light"] form textarea,html[data-theme="light"] .code { color:var(--text-primary); background:#fff; border-color:var(--border-light); }
+html[data-theme="light"] .admin .row:hover { background:var(--bg-hover); }
+html[data-theme="light"] .admin-tabs a { color:var(--text-secondary); background:#fff; border-color:var(--border); }
+html[data-theme="light"] .admin-tabs a.active { color:var(--accent); background:var(--accent-dim); }
+html[data-theme="light"] .coding-workspace,html[data-theme="light"] .problem-panel,html[data-theme="light"] .editor-panel,html[data-theme="light"] .result-panel,html[data-theme="light"] .run-bar,html[data-theme="light"] .lesson-article { background:#fff; border-color:var(--border); }
+html[data-theme="light"] .leetcode-editor,html[data-theme="light"] .problem-specs section,html[data-theme="light"] .markdown-code { color:var(--text-primary); background:#f8faff; border-color:var(--border); }

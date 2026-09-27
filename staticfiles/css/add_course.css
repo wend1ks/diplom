@@ -1,0 +1,37 @@
+body{
+    min-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+}
+.input.is-rounded{
+    margin-bottom: 20px;
+    width: 500px;
+    margin-top: 30px;
+    
+}
+#id_description{
+    width: 400px;
+    height: 200px;
+}
+#accept{
+    margin-top: 20px;
+    margin-left: 20px;
+}
+#cancel{
+    margin-left: 10px;
+}
+.roll-in-blurred-left {
+	animation: roll-in-blurred-left 0.65s cubic-bezier(0.230, 1.000, 0.320, 1.000) both;
+}
+
+@keyframes roll-in-blurred-left {
+  0% {
+    transform: translateX(-1000px) rotate(-720deg);
+    filter: blur(50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
+    filter: blur(0);
+    opacity: 1;
+  }

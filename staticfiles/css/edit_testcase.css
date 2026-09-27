@@ -1,0 +1,33 @@
+body{
+    min-height: calc(100vh - 80px);
+}
+.input.is-rounded{
+    margin-bottom: 20px;
+    margin-top: 30px;
+}
+#id_expected_output{
+    width: 400px;
+    height: 200px;
+    margin-top: 20px;
+}
+#id_input_data{
+    width: 400px;
+    height: 200px;
+    margin-bottom: 20px;
+}
+#accept{
+    margin-top: 10px;
+    margin-left: 10px;
+}
+#cancel{
+    margin-top: 10px;
+    margin-left: 10px;
+}
+#text{
+    margin-left: 20px;
+    margin-top: 30px;
+}
+.container2{
+    margin-left: 20px;
+    width: 400px;
+}

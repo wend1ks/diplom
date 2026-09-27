@@ -1,0 +1,22 @@
+body{
+    min-height: calc(100vh - 80px);
+}
+.container2{
+    width: 500px;
+    display: flex;
+    flex-direction: column;
+    margin-left: 40px;
+}
+.input.is-rounded{
+    margin-bottom: 20px;
+}
+#text{
+    margin-left: 20px;
+    margin-top: 30px;
+}
+#id_content{
+    height: 200px;
+}
+#id_video_url{
+    margin-top: 20px;
+}

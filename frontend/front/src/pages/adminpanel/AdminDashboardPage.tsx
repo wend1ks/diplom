@@ -8,35 +8,37 @@ function count(data: CountResponse | unknown[]) {
   return Array.isArray(data) ? data.length : data.count ?? data.results?.length ?? 0
 }
 
-export default function AdminDashboardPage() {
+export default function AdminDashboardPage({ role = 'admin' }: { role?: string }) {
+  const isTeacher = role === 'teacher'
   const [stats, setStats] = useState({ courses: 0, modules: 0, lessons: 0, requests: 0 })
 
   useEffect(() => {
-    Promise.all([
+    const requests = [
       request('/courses/'),
       request('/modules/'),
       request('/lessons/'),
-      request('/teacher-requests/'),
-    ]).then(([courses, modules, lessons, requests]) => {
+    ]
+    if (!isTeacher) requests.push(request('/teacher-requests/'))
+    Promise.all(requests).then(([courses, modules, lessons, teacherRequests]) => {
       setStats({
         courses: count(courses),
         modules: count(modules),
         lessons: count(lessons),
-        requests: count(requests),
+        requests: isTeacher ? 0 : count(teacherRequests),
       })
     }).catch(() => undefined)
-  }, [])
+  }, [isTeacher])
 
   return (
     <section className="admin-area">
       <div className="admin-page">
         <nav className="admin-topbar">
-          <Link to="/admin" className="admin-brand"><span className="admin-brand-mark">Py</span> Панель управления</Link>
+          <Link to="/admin" className="admin-brand"><span className="admin-brand-mark">Py</span> {isTeacher ? 'Кабинет преподавателя' : 'Панель управления'}</Link>
           <div className="admin-nav">
-            <Link to="/admin">Обзор</Link>
-            <Link to="/admin/courses">Курсы</Link>
-            <Link to="/admin/assignments">Самостоятельные</Link>
-            <Link to="/admin/teacher-requests">Заявки</Link>
+            <Link to="/admin">{isTeacher ? 'Мой кабинет' : 'Обзор'}</Link>
+            <Link to="/admin/courses">{isTeacher ? 'Мои курсы' : 'Курсы'}</Link>
+            <Link to="/admin/assignments">Задания</Link>
+            {!isTeacher && <Link to="/admin/teacher-requests">Заявки</Link>}
           </div>
           <div className="admin-user">
             <Link to="/profile">Профиль</Link>
@@ -45,11 +47,11 @@ export default function AdminDashboardPage() {
         </nav>
         <div className="admin-header">
           <div>
-            <p className="admin-eyebrow">PyLearn / Панель управления</p>
-            <h1 className="admin-heading">Добро пожаловать</h1>
-            <p className="admin-subtitle">Управляйте учебной программой из одного места.</p>
+            <p className="admin-eyebrow">PyLearn / {isTeacher ? 'Кабинет преподавателя' : 'Панель управления'}</p>
+            <h1 className="admin-heading">{isTeacher ? 'Ваши курсы и задания' : 'Добро пожаловать'}</h1>
+            <p className="admin-subtitle">{isTeacher ? 'Создавайте курсы и проверяйте работы учеников.' : 'Управляйте учебной программой из одного места.'}</p>
           </div>
-          <Link to="/admin/courses" className="admin-button">+ Добавить курс</Link>
+          <Link to="/admin/courses" className="admin-button">{isTeacher ? '+ Создать курс' : '+ Добавить курс'}</Link>
         </div>
 
         <section className="admin-grid">
@@ -73,8 +75,8 @@ export default function AdminDashboardPage() {
         <div className="admin-card-grid">
           <Link className="admin-quick-link" to="/admin/courses">
             <div className="admin-card">
-              <strong>Учебные курсы →</strong>
-              <p>Добавляйте курсы, меняйте их описание и переходите к структуре модулей.</p>
+              <strong>{isTeacher ? 'Мои курсы →' : 'Учебные курсы →'}</strong>
+              <p>{isTeacher ? 'Создавайте курсы и управляйте их модулями и уроками.' : 'Добавляйте курсы, меняйте их описание и переходите к структуре модулей.'}</p>
             </div>
           </Link>
         </div>
@@ -85,7 +87,7 @@ export default function AdminDashboardPage() {
               <p>Создавайте задания и проверяйте отправленные решения учеников.</p>
             </div>
           </Link>
-          {stats.requests > 0 && (
+          {!isTeacher && stats.requests > 0 && (
             <Link className="admin-quick-link" to="/admin/teacher-requests">
               <div className="admin-card">
                 <strong>Заявки преподавателей →</strong>

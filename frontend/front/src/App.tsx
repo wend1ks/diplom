@@ -1,5 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
-import {useEffect,useState} from 'react'
+﻿import {useEffect,useState} from 'react'
 import type { ReactNode } from 'react'
 import { HashRouter, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import './App.css'
@@ -15,6 +14,7 @@ import SiteLayout from './layouts/SiteLayout'
 import Landing from './pages/landing/landing'
 import SigninPage from './pages/users/signin'
 import SignupPage from './pages/users/signup'
+import PasswordResetPage from './pages/users/PasswordResetPage'
 import GitHubCallbackPage from './pages/users/GitHubCallbackPage'
 import ProfilePage from './pages/users/profile'
 import ProfileEditPage from './pages/users/ProfileEdit'
@@ -29,7 +29,7 @@ import AdminCrudPage from './pages/adminpanel/AdminCrudPage'
 function CourseRoute(){ const { slug = '' } = useParams(); return <CourseDetailPage slug={slug}/> }
 function LessonRoute(){ const { lessonId = '' } = useParams(); return <LessonDetailPage lessonId={lessonId}/> }
 function AssignmentRoute(){ const { assignmentId = '' } = useParams(); return <AssignmentDetailPage assignmentId={assignmentId}/> }
-function AdminCrudRoute(){ const { resource = 'courses' } = useParams(); return <AdminCrudPage key={resource} resource={resource}/> }
+function AdminCrudRoute({ role }: { role?: string }){ const { resource = 'courses' } = useParams(); if (resource === 'teacher-requests' && role !== 'admin') return <Navigate to="/admin" replace />; return <AdminCrudPage key={resource} resource={resource} role={role}/> }
 function ProtectedRoute({ me, loading, children }: { me: any; loading: boolean; children: ReactNode }) {
   if (loading) return <PageLoader />
   return me ? <>{children}</> : <Navigate to="/signin" replace />
@@ -48,6 +48,7 @@ function AppRoutes() {
     <Route path="/" element={<Landing/>}/>
     <Route path="/signin" element={<SigninPage onAuth={refreshMe}/>}/>
     <Route path="/signup" element={<SignupPage onAuth={refreshMe}/>}/>
+    <Route path="/forgot-password" element={<PasswordResetPage/>}/>
     <Route path="/auth/github/callback" element={<GitHubCallbackPage onAuth={refreshMe}/>}/>
     <Route path="/courses" element={<ProtectedRoute me={me} loading={loading}><CourseListPage/></ProtectedRoute>}/>
     <Route path="/courses/:slug" element={<ProtectedRoute me={me} loading={loading}><CourseRoute/></ProtectedRoute>}/>
@@ -55,13 +56,11 @@ function AppRoutes() {
     <Route path="/assignments/:assignmentId" element={<ProtectedRoute me={me} loading={loading}><AssignmentRoute/></ProtectedRoute>}/>
     <Route path="/profile" element={<ProtectedRoute me={me} loading={loading}><ProfilePage/></ProtectedRoute>}/>
     <Route path="/profile/edit" element={<ProtectedRoute me={me} loading={loading}><ProfileEditPage/></ProtectedRoute>}/>
-    <Route path="/teacher-request" element={<ProtectedRoute me={me} loading={loading}><TeacherRequestPage/></ProtectedRoute>}/>
-    <Route path="/admin" element={<ProtectedRoute me={me} loading={loading}><AdminDashboardPage/></ProtectedRoute>}/>
-    <Route path="/admin/:resource" element={<ProtectedRoute me={me} loading={loading}><AdminCrudRoute/></ProtectedRoute>}/>
+    <Route path="/teacher-request" element={<ProtectedRoute me={me} loading={loading}>{me?.role === 'student' ? <TeacherRequestPage/> : <Navigate to="/profile" replace/>}</ProtectedRoute>}/>
+    <Route path="/admin" element={<ProtectedRoute me={me} loading={loading}>{['admin', 'teacher'].includes(me?.role) ? <AdminDashboardPage role={me.role}/> : <Navigate to="/profile" replace/>}</ProtectedRoute>}/>
+    <Route path="/admin/:resource" element={<ProtectedRoute me={me} loading={loading}>{['admin', 'teacher'].includes(me?.role) ? <AdminCrudRoute role={me.role}/> : <Navigate to="/profile" replace/>}</ProtectedRoute>}/>
     <Route path="*" element={<Landing/>}/>
   </Routes></></SiteLayout>
 }
 
 export default function App() { return <HashRouter><AppRoutes/></HashRouter> }
-
-

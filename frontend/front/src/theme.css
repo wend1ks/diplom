@@ -1,7 +1,7 @@
 /* The existing graphite palette stays the default theme. */
 .theme-toggle { position: fixed; right: 20px; bottom: 20px; z-index: 20; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; color: var(--text-primary); background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 50%; box-shadow: 0 8px 24px rgba(0,0,0,.2); font-size: 20px; line-height: 1; }
 .theme-toggle:hover { background: var(--bg-hover); border-color: var(--accent); transform: translateY(-2px); }
-html[data-theme="light"] { --bg-base:#f6f8fc; --bg-surface:#fff; --bg-card:#fff; --bg-hover:#edf2fa; --border:#d9e1ef; --border-light:#bdc9dc; --text-primary:#172033; --text-secondary:#52627a; --text-muted:#77859a; --accent:#3d6fd1; --accent-glow:rgba(61,111,209,.16); --accent-dim:rgba(61,111,209,.09); --green:#18864b; }
+html[data-theme="light"] { --bg-base:#f1f8ff; --bg-surface:#e5f3ff; --bg-card:#fff; --bg-hover:#d9edff; --surface:#e5f3ff; --surface-soft:#d6ebff; --text:#172033; --border:#c6def2; --border-light:#b7d3ec; --border-strong:#a8c9e8; --text:#172033; --text-primary:#172033; --text-secondary:#52627a; --text-muted:#667c95; --accent:#3478c7; --accent-glow:rgba(52,120,199,.16); --accent-dim:rgba(52,120,199,.09); --accent-soft:rgba(52,120,199,.12); --green:#18864b; }
 html[data-theme="light"] body,html[data-theme="light"] #root { background:var(--bg-base); color:var(--text-primary); }
 html[data-theme="light"] .topbar { background:rgba(255,255,255,.92); border-color:var(--border); }
 html[data-theme="light"] .brand,html[data-theme="light"] .hero h1,html[data-theme="light"] .page > h1,html[data-theme="light"] .pricing h2,html[data-theme="light"] .card strong { color:var(--text-primary); }

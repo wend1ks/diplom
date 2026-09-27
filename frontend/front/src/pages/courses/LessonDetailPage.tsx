@@ -33,18 +33,36 @@ function indentCode(code: string, start: number, end: number, shift: boolean) {
   return { value: before + '  ' + after, start: start + 2, end: start + 2 }
 }
 
+type TestFeedback = { passed?: boolean; input?: string; output?: string; expected?: string }
+
 export default function LessonDetailPage({ lessonId }: { lessonId: string }) {
   const [lesson, setLesson] = useState<any>(null)
+  const [nextLesson, setNextLesson] = useState<any>(null)
   const [code, setCode] = useState('')
   const [result, setResult] = useState('')
+  const [feedback, setFeedback] = useState<TestFeedback[]>([])
+  const [runPassed, setRunPassed] = useState<boolean | null>(null)
   const [error, setError] = useState('')
   const [isRunning, setIsRunning] = useState(false)
 
   useEffect(() => {
+    setNextLesson(null)
     request(`/lessons/${lessonId}/`)
       .then(data => {
         setLesson(data)
         setCode(data.code_template || '')
+        if (data.course_slug) {
+          request(`/courses/${data.course_slug}/`)
+            .then(course => {
+              const lessons = (course.modules || [])
+                .flatMap((module: any) =>
+                  (module.lessons || []).slice().sort((a: any, b: any) => a.order - b.order || a.id - b.id),
+                )
+              const currentIndex = lessons.findIndex((item: any) => item.id === data.id)
+              setNextLesson(currentIndex >= 0 ? lessons[currentIndex + 1] || null : null)
+            })
+            .catch(() => setNextLesson(null))
+        }
       })
       .catch(reason => setError(reason.message))
   }, [lessonId])
@@ -52,23 +70,29 @@ export default function LessonDetailPage({ lessonId }: { lessonId: string }) {
   async function run() {
     setIsRunning(true)
     setResult('')
+    setFeedback([])
+    setRunPassed(null)
 
     try {
       const data = await request(`/lessons/${lessonId}/run/`, {
         method: 'POST',
         body: JSON.stringify({ code }),
       })
-      const feedback = (data.feedback || [])
+      const testFeedback = (data.feedback || []) as TestFeedback[]
+      const feedbackText = testFeedback
         .map(
           (item: any, index: number) =>
             `Тест ${index + 1}: ${item.passed ? 'пройден' : 'не пройден'}\nВвод: ${item.input || '—'}\nПолучено: ${item.output || '—'}\nОжидалось: ${item.expected || '—'}`,
         )
         .join('\n\n')
 
-      setResult(feedback || (data.result === 'success' ? 'Все тесты пройдены.' : 'Проверка не пройдена.'))
+      setFeedback(testFeedback)
+      setRunPassed(data.result === 'success')
+      setResult(feedbackText || (data.result === 'success' ? 'Все тесты пройдены.' : 'Проверка не пройдена.'))
       if (data.result === 'success') setLesson({ ...lesson, is_completed: true })
     } catch (reason) {
       setResult((reason as Error).message)
+      setRunPassed(false)
     } finally {
       setIsRunning(false)
     }
@@ -81,6 +105,8 @@ export default function LessonDetailPage({ lessonId }: { lessonId: string }) {
   if (!lesson) return <PageLoader label="Открываем урок…" />
 
   const coursePath = lesson.course_slug ? `/courses/${lesson.course_slug}` : '/courses'
+  const passedTests = feedback.filter(test => test.passed).length
+  const hasResult = Boolean(result)
 
   if (lesson.lesson_type !== 'task') {
     const embedUrl = lesson.video_url ? youtubeEmbedUrl(lesson.video_url) : null
@@ -109,6 +135,13 @@ export default function LessonDetailPage({ lessonId }: { lessonId: string }) {
                 Открыть видео ↗
               </a>
             ))}
+          {nextLesson && (
+            <div className="lesson-next-wrap" style={{ marginTop: 32 }}>
+              <Link className="button primary" to={`/lessons/${nextLesson.id}`}>
+                Следующий урок →
+              </Link>
+            </div>
+          )}
         </article>
       </section>
     )
@@ -169,20 +202,42 @@ export default function LessonDetailPage({ lessonId }: { lessonId: string }) {
           />
           <div className="run-bar">
             <span>{code.split('\n').length} строк</span>
-            <button className="button primary" disabled={isRunning} onClick={run}>
-              {isRunning ? 'Проверка…' : 'Запустить проверку'}
-            </button>
-          </div>
-          <div className={`result-panel ${result ? 'has-result' : ''}`}>
-            <div className="result-heading">
-              <span>{result ? 'Результат проверки' : 'Консоль'}</span>
-              {result && <span className="result-state">Выполнено</span>}
+            <div className="run-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button className="button primary" disabled={isRunning} onClick={run}>
+                {isRunning ? 'Проверка…' : 'Запустить проверку'}
+              </button>
+              {nextLesson && (
+                <Link className="button outline" to={`/lessons/${nextLesson.id}`}>
+                  Следующий урок →
+                </Link>
+              )}
             </div>
-            <pre>{result || 'Результат проверки появится здесь.'}</pre>
+          </div>
+          <div className={`result-panel ${hasResult ? 'has-result' : ''} ${runPassed === true ? 'result-success' : runPassed === false ? 'result-failure' : ''}`}>
+            <div className="result-heading">
+              <span>{hasResult ? 'Результат проверки' : 'Консоль'}</span>
+              {hasResult && <span className="result-state">{runPassed ? '✓ Решение принято' : '× Есть ошибки'}</span>}
+            </div>
+            {isRunning ? (
+              <div className="result-empty result-loading"><span />Проверяем решение на тестах…</div>
+            ) : feedback.length ? (
+              <div className="test-results">
+                <div className="test-summary"><strong>{runPassed ? 'Решение принято' : 'Нужна доработка'}</strong><span>{passedTests} из {feedback.length} тестов пройдено</span></div>
+                {feedback.map((test, index) => (
+                  <article className={`test-result ${test.passed ? 'passed' : 'failed'}`} key={index}>
+                    <header><span>Тест {index + 1}</span><b>{test.passed ? '✓ Принято' : 'Нужна правка'}</b></header>
+                    <div className="test-values">
+                      <p><span>Ввод</span><code>{test.input || '—'}</code></p>
+                      <p><span>Получено</span><code>{test.output || '—'}</code></p>
+                      <p><span>Ожидалось</span><code>{test.expected || '—'}</code></p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : hasResult ? <pre>{result}</pre> : <div className="result-empty">Запустите проверку, чтобы увидеть результат.</div>}
           </div>
         </section>
       </div>
     </section>
   )
 }
-

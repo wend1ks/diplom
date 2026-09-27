@@ -51,11 +51,14 @@ export default function CourseDetailPage({ slug }: { slug: string }) {
           </h2>
           <ul>
             {(module.lessons || []).map((lesson: any) => (
-              <li key={lesson.id}>
+              <li className="lesson-progress" key={lesson.id}>
                 <Link to={`/lessons/${lesson.id}`}>
                   {lesson.lesson_type === 'task' ? '📝' : '📄'} {lesson.title}
-                </Link>{' '}
-                — {lesson.is_completed ? '✓ Пройден' : '◦ Не пройден'}
+                </Link>
+                <span className={`lesson-status ${lesson.is_completed ? 'is-complete' : 'is-pending'}`}>
+                  <i aria-hidden="true">{lesson.is_completed ? '✓' : '○'}</i>
+                  {lesson.is_completed ? 'Выполнено' : 'В процессе'}
+                </span>
               </li>
             ))}
           </ul>

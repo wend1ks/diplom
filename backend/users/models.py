@@ -5,6 +5,9 @@ from django.contrib.auth.models import AbstractUser
 
 
 class CustomUser(AbstractUser):
+    # Every account must own one distinct address.  The serializer normalizes
+    # addresses to lowercase, while this constraint protects the database too.
+    email = models.EmailField('email address', unique=True)
     github_id = models.BigIntegerField(unique=True, null=True, blank=True)
     user_image = models.ImageField(
         blank=True,
@@ -27,6 +30,23 @@ class CustomUser(AbstractUser):
 
     def is_teacher(self):
         return self.role == "teacher"
+
+
+class PasswordResetCode(models.Model):
+    """Short-lived credentials used only for password recovery."""
+
+    user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='password_reset_code',
+    )
+    code_hash = models.CharField(max_length=128, blank=True)
+    code_expires_at = models.DateTimeField(blank=True, null=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    sent_at = models.DateTimeField(blank=True, null=True)
+    reset_token_hash = models.CharField(max_length=128, blank=True)
+    reset_expires_at = models.DateTimeField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class TeacherRequest(models.Model):
@@ -54,4 +74,3 @@ class TeacherRequest(models.Model):
 
     class Meta:
         ordering = ("-created_at",)
-

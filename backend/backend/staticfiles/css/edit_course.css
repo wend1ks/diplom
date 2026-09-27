@@ -1,0 +1,28 @@
+body{
+    min-height: calc(100vh - 80px);
+}
+.input.is-rounded{
+    margin-bottom: 20px;
+    margin-top: 30px;
+    
+}
+#id_description{
+    width: 400px;
+    height: 200px;
+}
+#accept{
+    margin-top: 20px;
+    margin-left: 20px;
+}
+#cancel{
+    margin-top: 20px;
+    margin-left: 10px;
+}
+#text{
+    margin-left: 20px;
+}
+#delete{
+    margin-top: 20px;
+    margin-left: 10px;
+}
+

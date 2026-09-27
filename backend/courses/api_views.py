@@ -173,6 +173,9 @@ class AssignmentSubmissionViewSet(viewsets.ModelViewSet):
             'student',
             'reviewed_by',
         )
+        assignment_id = self.request.query_params.get('assignment')
+        if assignment_id:
+            queryset = queryset.filter(assignment_id=assignment_id)
         if is_limited_teacher(self.request.user):
             return queryset.filter(assignment__course__author=self.request.user)
         if self.request.user.is_staff or self.request.user.role == 'admin':

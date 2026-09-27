@@ -229,9 +229,14 @@ const titleFor = (item: Item) =>
 
 export default function AdminCrudPage({
   resource = 'courses',
+  role,
 }: {
   resource?: string
+  role?: string
 }) {
+  const visibleResources = role === 'teacher'
+    ? resources.filter(key => key !== 'teacher-requests')
+    : resources
   const current = (
     resources.includes(resource as Resource) ? resource : 'courses'
   ) as Resource
@@ -378,7 +383,7 @@ export default function AdminCrudPage({
       <h1>{config.title}</h1>
 
       <div className="admin-tabs">
-        {resources.map(key => (
+        {visibleResources.map(key => (
           <Link
             className={key === current ? 'active' : ''}
             to={`/admin/${key}`}

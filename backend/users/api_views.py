@@ -1,9 +1,14 @@
 import secrets
+from datetime import timedelta
 from urllib.parse import urlencode
-
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.mail import send_mail
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from django.core import signing
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect
@@ -14,16 +19,19 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-
-from .models import TeacherRequest
+from .models import PasswordResetCode, TeacherRequest
 from .serializers import RegisterSerializer, TeacherRequestSerializer, UserSerializer
 
 
 User = get_user_model()
 
+PASSWORD_RESET_CODE_TTL_MINUTES = 10
+PASSWORD_RESET_TOKEN_TTL_MINUTES = 10
+PASSWORD_RESET_RESEND_SECONDS = 60
+PASSWORD_RESET_MAX_ATTEMPTS = 5
+
 
 def _github_request(method, url, **kwargs):
-    """Make GitHub OAuth calls resilient to brief network interruptions."""
     retry = Retry(
         total=2,
         connect=2,
@@ -43,7 +51,6 @@ def _github_is_configured():
 
 
 def _github_username(login, github_id):
-    """Produce a unique Django username from GitHub's public login."""
     base = ''.join(char if char.isalnum() or char in '._-' else '_' for char in login)
     base = (base or 'github_user')[:130]
     username = f'{base}_{github_id}'[:150]
@@ -81,7 +88,8 @@ def _github_user(access_token):
             verified = primary or next((item for item in emails if item.get('verified')), None)
             email = (verified or {}).get('email', '')
 
-    # Link an existing local account only by a verified GitHub email.
+    if not email:
+        raise ValueError('GitHub account must have a verified email address.')
     user = User.objects.filter(email__iexact=email).first() if email else None
     if user:
         user.github_id = github_id
@@ -131,7 +139,7 @@ class GitHubAuthCallbackAPIView(APIView):
                 data={
                     'client_id': settings.GITHUB_CLIENT_ID,
                     'client_secret': settings.GITHUB_CLIENT_SECRET,
-                    'code': code,
+                    'code': code,   
                     'redirect_uri': settings.GITHUB_REDIRECT_URI,
                 },
                 headers={'Accept': 'application/json'},
@@ -178,6 +186,110 @@ class RegisterAPIView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = (permissions.AllowAny,)
+
+
+class PasswordResetRequestAPIView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        email = (request.data.get('email') or '').strip().lower()
+        if not email:
+            return Response({'detail': 'Укажите адрес электронной почты.'}, status=status.HTTP_400_BAD_REQUEST)
+        users = User.objects.filter(email__iexact=email, is_active=True)
+        if users.count() != 1:
+            return Response({'detail': 'Если аккаунт с такой почтой существует, код уже отправлен.'})
+
+        user = users.first()
+        now = timezone.now()
+        with transaction.atomic():
+            reset, _ = PasswordResetCode.objects.select_for_update().get_or_create(user=user)
+            if reset.sent_at and (now - reset.sent_at).total_seconds() < PASSWORD_RESET_RESEND_SECONDS:
+                return Response({'detail': 'Если аккаунт с такой почтой существует, код уже отправлен.'})
+
+            code = f'{secrets.randbelow(1_000_000):06d}'
+            reset.code_hash = make_password(code)
+            reset.code_expires_at = now + timedelta(minutes=PASSWORD_RESET_CODE_TTL_MINUTES)
+            reset.attempts = 0
+            reset.sent_at = now
+            reset.reset_token_hash = ''
+            reset.reset_expires_at = None
+            reset.save()
+
+        try:
+            send_mail(
+                subject='Код для восстановления пароля',
+                message=(
+                    f'Ваш код для восстановления пароля: {code}\n\n'
+                    f'Он действует {PASSWORD_RESET_CODE_TTL_MINUTES} минут. '
+                    'Если вы не запрашивали смену пароля, просто проигнорируйте это письмо.'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception:
+            reset.delete()
+            return Response({'detail': 'Не удалось отправить письмо. Попробуйте позже.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        return Response({'detail': 'Если аккаунт с такой почтой существует, код уже отправлен.'})
+
+
+class PasswordResetVerifyAPIView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        email = (request.data.get('email') or '').strip().lower()
+        code = str(request.data.get('code') or '').strip()
+        if not email or not (len(code) == 6 and code.isdigit()):
+            return Response({'detail': 'Введите корректную почту и 6-значный код.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            user = User.objects.filter(email__iexact=email, is_active=True).first()
+            reset = PasswordResetCode.objects.select_for_update().filter(user=user).first() if user else None
+            now = timezone.now()
+            if not reset or not reset.code_expires_at or reset.code_expires_at <= now:
+                return Response({'detail': 'Код неверный или срок его действия истёк.'}, status=status.HTTP_400_BAD_REQUEST)
+            if reset.attempts >= PASSWORD_RESET_MAX_ATTEMPTS:
+                return Response({'detail': 'Превышено число попыток. Запросите новый код.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not check_password(code, reset.code_hash):
+                reset.attempts += 1
+                reset.save(update_fields=('attempts', 'updated_at'))
+                return Response({'detail': 'Код неверный или срок его действия истёк.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            reset_token = secrets.token_urlsafe(32)
+            reset.code_hash = ''
+            reset.code_expires_at = None
+            reset.reset_token_hash = make_password(reset_token)
+            reset.reset_expires_at = now + timedelta(minutes=PASSWORD_RESET_TOKEN_TTL_MINUTES)
+            reset.save()
+
+        return Response({'reset_token': reset_token})
+
+
+class PasswordResetConfirmAPIView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        email = (request.data.get('email') or '').strip().lower()
+        reset_token = str(request.data.get('reset_token') or '')
+        password = str(request.data.get('password') or '')
+        if not email or not reset_token or not password:
+            return Response({'detail': 'Заполните все поля.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            user = User.objects.filter(email__iexact=email, is_active=True).first()
+            reset = PasswordResetCode.objects.select_for_update().filter(user=user).first() if user else None
+            now = timezone.now()
+            if not reset or not reset.reset_expires_at or reset.reset_expires_at <= now or not check_password(reset_token, reset.reset_token_hash):
+                return Response({'detail': 'Сессия восстановления истекла. Запросите новый код.'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                validate_password(password, user=user)
+            except DjangoValidationError as error:
+                return Response({'detail': ' '.join(error.messages)}, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(password)
+            user.save(update_fields=('password',))
+            reset.delete()
+
+        return Response({'detail': 'Пароль успешно изменён.'})
 
 
 class MeAPIView(generics.RetrieveUpdateAPIView):

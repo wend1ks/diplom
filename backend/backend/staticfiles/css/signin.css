@@ -1,0 +1,18 @@
+body{
+    width: 100%;
+    height: 100%;
+}
+.page-center {
+    display: flex;
+    justify-content: center;
+    margin-top: 200px;
+    min-height: calc(100vh - 80px);
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+.container2{
+    width: 200px;
+}
+.fields{
+    margin-bottom: 20px;
+}

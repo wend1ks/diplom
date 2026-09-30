@@ -218,6 +218,19 @@ const configs: Record<Resource, Config> = {
 
 const resources = Object.keys(configs) as Resource[]
 
+async function fetchAll(path: string): Promise<Item[]> {
+  const items: Item[] = []
+  let page = 1
+
+  while (true) {
+    const data = await request(`${path}?page=${page}`)
+    if (Array.isArray(data)) return [...items, ...data]
+
+    items.push(...(data.results || []))
+    if (!data.next) return items
+    page += 1
+  }
+}
 const titleFor = (item: Item) =>
   String(
     item.title ||
@@ -270,8 +283,7 @@ export default function AdminCrudPage({
   }
 
   const load = async () => {
-    const data = await request(`/${current}/`)
-    setItems(data.results || data)
+    setItems(await fetchAll(`/${current}/`))
   }
 
   const relation = config.fields.find(field =>
@@ -281,19 +293,13 @@ export default function AdminCrudPage({
   useEffect(() => {
     setForm({})
     setIsEditorOpen(false)
-    request(`/${current}/`)
-      .then(data => setItems(data.results || data))
+    fetchAll(`/${current}/`)
+      .then(setItems)
       .catch(error => show(error.message, true))
 
     if (relation) {
-      request(
-        `/${relation === 'course' ? 'courses' : `${relation}s`}/`,
-      )
-        .then(data =>
-          setReferences({
-            [relation]: data.results || data,
-          }),
-        )
+      fetchAll(`/${relation === 'course' ? 'courses' : `${relation}s`}/`)
+        .then(items => setReferences({ [relation]: items }))
         .catch(() => undefined)
     }
   }, [current, relation])

@@ -92,15 +92,26 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASE_URL = os.getenv('DATABASE_URL')
-if not DEBUG and not DATABASE_URL:
+if DEBUG:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            os.getenv(
+                'LOCAL_DATABASE_URL',
+                'postgres://postgres:admin@localhost:5432/education_platform',
+            ),
+            conn_max_age=600,
+        )
+    }
+elif DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+else:
     raise ImproperlyConfigured('DATABASE_URL must be set when DJANGO_DEBUG is False.')
-DATABASES = {
-    'default': dj_database_url.parse(
-        DATABASE_URL or 'postgres://postgres:admin@localhost:5432/education_platform',
-        conn_max_age=600,
-        ssl_require=not DEBUG,
-    )
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

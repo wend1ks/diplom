@@ -15,3 +15,60 @@ html[data-theme="light"] .admin-tabs a { color:var(--text-secondary); background
 html[data-theme="light"] .admin-tabs a.active { color:var(--accent); background:var(--accent-dim); }
 html[data-theme="light"] .coding-workspace,html[data-theme="light"] .problem-panel,html[data-theme="light"] .editor-panel,html[data-theme="light"] .result-panel,html[data-theme="light"] .run-bar,html[data-theme="light"] .lesson-article { background:#fff; border-color:var(--border); }
 html[data-theme="light"] .leetcode-editor,html[data-theme="light"] .problem-specs section,html[data-theme="light"] .markdown-code { color:var(--text-primary); background:#f8faff; border-color:var(--border); }
+
+/* Light theme readability overrides */
+html[data-theme="light"] {
+  --text: #000;
+  --text-primary: #000;
+  --text-secondary: #333;
+  --text-muted: #555;
+}
+
+html[data-theme="light"] body,
+html[data-theme="light"] #root,
+html[data-theme="light"] .auth-field label,
+html[data-theme="light"] .auth-title,
+html[data-theme="light"] .profile-edit-form label {
+  color: #000;
+}
+
+html[data-theme="light"] .auth-card {
+  color: #000;
+  background: #fff;
+  border-color: var(--border);
+  box-shadow: 0 12px 36px rgba(20, 40, 65, .12);
+}
+
+html[data-theme="light"] input:not([type="button"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]),
+html[data-theme="light"] textarea,
+html[data-theme="light"] select,
+html[data-theme="light"] .auth-input,
+html[data-theme="light"] .otp-input,
+html[data-theme="light"] .code-editor,
+html[data-theme="light"] .leetcode-editor,
+html[data-theme="light"] .code {
+  color: #000 !important;
+  background: #fff !important;
+  border-color: var(--border-light) !important;
+  caret-color: var(--accent);
+}
+
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder {
+  color: #666;
+  opacity: 1;
+}
+/* Keep headings readable in the light theme */
+html[data-theme="light"] h1,
+html[data-theme="light"] h2,
+html[data-theme="light"] h3,
+html[data-theme="light"] h4,
+html[data-theme="light"] h5,
+html[data-theme="light"] h6,
+html[data-theme="light"] .course-title {
+  color: #000 !important;
+}
+
+html[data-theme="light"] .hero h1 em {
+  color: var(--accent) !important;
+}

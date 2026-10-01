@@ -44,6 +44,10 @@ def require_owned_course(request, course):
     if is_limited_teacher(request.user) and course.author_id != request.user.id:
         raise permissions.PermissionDenied('Можно работать только со своими курсами.')
 
+def next_order(queryset):
+    current_order = queryset.order_by('-order').values_list('order', flat=True).first()
+    return 1 if current_order is None else current_order + 1
+
 class IsTeacherOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         return bool(
@@ -87,8 +91,12 @@ class ModuleViewSet(viewsets.ModelViewSet):
         return readable_courses_queryset(queryset, self.request, 'course__')
 
     def perform_create(self, serializer):
-        require_owned_course(self.request, serializer.validated_data['course'])
-        serializer.save()
+        course = serializer.validated_data['course']
+        require_owned_course(self.request, course)
+        order = serializer.validated_data.get('order')
+        if order is None:
+            order = next_order(Module.objects.filter(course=course))
+        serializer.save(order=order)
 
     def perform_update(self, serializer):
         require_owned_course(self.request, serializer.validated_data.get('course', serializer.instance.course))
@@ -106,8 +114,12 @@ class LessonViewSet(viewsets.ModelViewSet):
         return readable_courses_queryset(queryset, self.request, 'module__course__')
 
     def perform_create(self, serializer):
-        require_owned_course(self.request, serializer.validated_data['module'].course)
-        serializer.save()
+        module = serializer.validated_data['module']
+        require_owned_course(self.request, module.course)
+        order = serializer.validated_data.get('order')
+        if order is None:
+            order = next_order(Lesson.objects.filter(module=module))
+        serializer.save(order=order)
 
     def perform_update(self, serializer):
         module = serializer.validated_data.get('module', serializer.instance.module)
@@ -135,8 +147,12 @@ class TestCaseViewSet(viewsets.ModelViewSet):
         return readable_courses_queryset(queryset, self.request, 'lesson__module__course__')
 
     def perform_create(self, serializer):
-        require_owned_course(self.request, serializer.validated_data['lesson'].module.course)
-        serializer.save()
+        lesson = serializer.validated_data['lesson']
+        require_owned_course(self.request, lesson.module.course)
+        order = serializer.validated_data.get('order')
+        if order is None:
+            order = next_order(TestCase.objects.filter(lesson=lesson))
+        serializer.save(order=order)
 
     def perform_update(self, serializer):
         lesson = serializer.validated_data.get('lesson', serializer.instance.lesson)

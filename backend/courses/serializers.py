@@ -14,6 +14,7 @@ def can_manage_course(request, course):
 
 class TestCaseSerializer(serializers.ModelSerializer):
     lesson = serializers.PrimaryKeyRelatedField(queryset=Lesson.objects.all())
+    order = serializers.IntegerField(required=False)
     can_manage = serializers.SerializerMethodField()
 
     def get_can_manage(self, testcase):
@@ -33,6 +34,7 @@ class TestCaseSerializer(serializers.ModelSerializer):
 
 class LessonSerializer(serializers.ModelSerializer):
     module = serializers.PrimaryKeyRelatedField(queryset=Module.objects.all())
+    order = serializers.IntegerField(required=False)
     course_slug = serializers.CharField(source='module.course.slug', read_only=True)
     is_completed = serializers.SerializerMethodField()
     can_manage = serializers.SerializerMethodField()
@@ -70,6 +72,7 @@ class LessonSerializer(serializers.ModelSerializer):
 
 class ModuleSerializer(serializers.ModelSerializer):
     course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+    order = serializers.IntegerField(required=False)
     lessons = LessonSerializer(many=True, read_only=True)
     can_manage = serializers.SerializerMethodField()
 

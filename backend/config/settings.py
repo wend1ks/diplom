@@ -96,7 +96,7 @@ if DEBUG:
     DATABASES = {
         'default': dj_database_url.parse(
             os.getenv(
-                'LOCAL_DATABASE_URL',
+                'LOCAL_DATABASE_URL', 
                 'postgres://postgres:admin@localhost:5432/education_platform',
             ),
             conn_max_age=600,

@@ -32,19 +32,6 @@ export default function AdminDashboardPage({ role = 'admin' }: { role?: string }
   return (
     <section className="admin-area">
       <div className="admin-page">
-        <nav className="admin-topbar">
-          <Link to="/admin" className="admin-brand"><span className="admin-brand-mark">Py</span> {isTeacher ? 'Кабинет преподавателя' : 'Панель управления'}</Link>
-          <div className="admin-nav">
-            <Link to="/admin">{isTeacher ? 'Мой кабинет' : 'Обзор'}</Link>
-            <Link to="/admin/courses">{isTeacher ? 'Мои курсы' : 'Курсы'}</Link>
-            <Link to="/admin/assignments">Задания</Link>
-            {!isTeacher && <Link to="/admin/teacher-requests">Заявки</Link>}
-          </div>
-          <div className="admin-user">
-            <Link to="/profile">Профиль</Link>
-            <Link to="/">Выйти</Link>
-          </div>
-        </nav>
         <div className="admin-header">
           <div>
             <p className="admin-eyebrow">PyLearn / {isTeacher ? 'Кабинет преподавателя' : 'Панель управления'}</p>
@@ -79,8 +66,6 @@ export default function AdminDashboardPage({ role = 'admin' }: { role?: string }
               <p>{isTeacher ? 'Создавайте курсы и управляйте их модулями и уроками.' : 'Добавляйте курсы, меняйте их описание и переходите к структуре модулей.'}</p>
             </div>
           </Link>
-        </div>
-        <div className="admin-card-grid">
           <Link className="admin-quick-link" to="/admin/assignments">
             <div className="admin-card">
               <strong>Самостоятельные работы →</strong>

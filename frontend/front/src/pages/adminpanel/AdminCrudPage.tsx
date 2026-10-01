@@ -68,11 +68,6 @@ const configs: Record<Resource, Config> = {
         name: 'title',
         label: 'Название',
       },
-      {
-        name: 'order',
-        label: 'Порядок',
-        type: 'number',
-      },
     ],
   },
 
@@ -115,11 +110,6 @@ const configs: Record<Resource, Config> = {
         type: 'textarea',
       },
       {
-        name: 'order',
-        label: 'Порядок',
-        type: 'number',
-      },
-      {
         name: 'code_template',
         label: 'Шаблон кода',
         type: 'textarea',
@@ -151,11 +141,6 @@ const configs: Record<Resource, Config> = {
         name: 'expected_output',
         label: 'Ожидаемый результат',
         type: 'textarea',
-      },
-      {
-        name: 'order',
-        label: 'Порядок',
-        type: 'number',
       },
     ],
   },

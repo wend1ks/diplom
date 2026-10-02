@@ -200,7 +200,7 @@ export default function LessonDetailPage({ lessonId }: { lessonId: string }) {
               requestAnimationFrame(() => editor.setSelectionRange(update.start, update.end))
             }}
           />
-          <div className="run-bar">
+          <div className="run-bar"> 
             <span>{code.split('\n').length} строк</span>
             <div className="run-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button className="button primary" disabled={isRunning} onClick={run}>

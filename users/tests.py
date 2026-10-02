@@ -12,7 +12,7 @@ class JwtAuthenticationTests(APITestCase):
             'username': 'new_student',
             'email': 'student@example.com',
             'password': 'strong-password-123',
-            'first_name': 'Новый',
+            'first_name': 'Новый',  
             'last_name': 'Ученик',
         }
         register = self.client.post('/api/auth/register/', credentials, format='json')

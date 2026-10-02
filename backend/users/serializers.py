@@ -1,10 +1,23 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import TeacherRequest
 
 
 User = get_user_model()
+
+
+class LoginTokenSerializer(TokenObtainPairSerializer):
+    """Allow users to authenticate with either their username or email."""
+
+    def validate(self, attrs):
+        identifier = attrs.get(self.username_field, '').strip()
+        if '@' in identifier:
+            user = User.objects.filter(email__iexact=identifier).first()
+            if user:
+                attrs[self.username_field] = user.get_username()
+        return super().validate(attrs)
 
 
 class UserSerializer(serializers.ModelSerializer):

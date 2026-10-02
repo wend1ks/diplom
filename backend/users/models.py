@@ -5,8 +5,6 @@ from django.contrib.auth.models import AbstractUser
 
 
 class CustomUser(AbstractUser):
-    # Every account must own one distinct address.  The serializer normalizes
-    # addresses to lowercase, while this constraint protects the database too.
     email = models.EmailField('email address', unique=True)
     github_id = models.BigIntegerField(unique=True, null=True, blank=True)
     user_image = models.ImageField(
@@ -33,7 +31,6 @@ class CustomUser(AbstractUser):
 
 
 class PasswordResetCode(models.Model):
-    """Short-lived credentials used only for password recovery."""
 
     user = models.OneToOneField(
         CustomUser,

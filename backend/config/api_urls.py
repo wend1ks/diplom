@@ -24,6 +24,11 @@ from users.api_views import (
     TeacherRequestAPIView,
     TeacherRequestReviewAPIView,
 )
+from users.serializers import LoginTokenSerializer
+
+
+class LoginTokenView(TokenObtainPairView):
+    serializer_class = LoginTokenSerializer
 
 
 router = DefaultRouter()
@@ -39,7 +44,7 @@ router.register('progress', LessonProgressViewSet, basename='progress')
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/register/', RegisterAPIView.as_view(), name='register'),
-    path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/token/', LoginTokenView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/me/', MeAPIView.as_view(), name='me'),
     path('auth/password-reset/request/', PasswordResetRequestAPIView.as_view(), name='password_reset_request'),
